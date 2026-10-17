@@ -1,0 +1,47 @@
+[
+ {
+  "id": "ex1",
+  "disc": "Direito Constitucional",
+  "topic": "Direitos fundamentais",
+  "fonte": "EXEMPLO - substituir por questão real",
+  "q": "Segundo a CF/88, a casa é asilo inviolável do indivíduo. Em qual hipótese pode-se nela entrar sem consentimento, durante o dia?",
+  "opts": [
+   "Flagrante delito, desastre, socorro ou determinação judicial",
+   "Apenas ordem do delegado",
+   "Apenas flagrante delito",
+   "Qualquer suspeita policial"
+  ],
+  "ans": 0,
+  "exp": "Art. 5º, XI, CF/88."
+ },
+ {
+  "id": "ex2",
+  "disc": "Direito Penal",
+  "topic": "Aplicação da lei penal",
+  "fonte": "EXEMPLO - substituir por questão real",
+  "q": "Não há crime sem lei anterior que o defina. Esse é o princípio da:",
+  "opts": [
+   "Legalidade",
+   "Insignificância",
+   "Culpabilidade",
+   "Territorialidade"
+  ],
+  "ans": 0,
+  "exp": "Art. 1º, CP."
+ },
+ {
+  "id": "ex3",
+  "disc": "Língua Portuguesa",
+  "topic": "Concordância",
+  "fonte": "EXEMPLO - substituir por questão real",
+  "q": "Assinale a frase com concordância correta:",
+  "opts": [
+   "Haviam muitos candidatos.",
+   "Houve muitos candidatos.",
+   "Fazem dois anos que estudo.",
+   "Existe muitos livros."
+  ],
+  "ans": 1,
+  "exp": "'Haver' no sentido de existir é impessoal."
+ }
+]

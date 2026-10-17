@@ -1,0 +1,61 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Estudos PCBA</title>
+<style>
+:root{--bg:#0f172a;--c:#1e293b;--t:#e2e8f0;--a:#38bdf8;--ok:#4ade80;--err:#f87171}
+*{box-sizing:border-box}body{margin:0;font:16px system-ui,sans-serif;background:var(--bg);color:var(--t)}
+main{max-width:960px;margin:auto;padding:16px}.card{background:var(--c);border-radius:12px;padding:16px;margin:12px 0}
+input,select,button{font:inherit;padding:10px;border-radius:8px;border:1px solid #475569;background:#0b1220;color:var(--t);width:100%;margin:4px 0}
+button{background:var(--a);color:#001;border:0;cursor:pointer;font-weight:600}button.s{background:#334155;color:var(--t);width:auto}
+nav{display:flex;gap:8px;flex-wrap:wrap}nav button{width:auto}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+a.d{display:block;background:#0b1220;padding:14px;border-radius:8px;color:var(--a);text-decoration:none}
+.alert{border-left:6px solid var(--a)}.big{font-size:44px;font-weight:700}.bar{background:var(--a);height:14px;border-radius:7px}
+.opt{text-align:left;background:#0b1220;color:var(--t);border:1px solid #475569;font-weight:400}.err{color:var(--err)}
+</style></head><body><main>
+<div id="login" class="card" hidden><h2>Estudos • Polícia Civil da Bahia</h2>
+<input id="em" type="email" placeholder="E-mail" autocomplete="username"><input id="pw" type="password" placeholder="Senha" autocomplete="current-password">
+<button id="go">Entrar</button><p id="le" class="err"></p></div>
+<div id="chg" class="card" hidden><h2>Primeiro acesso: crie sua senha</h2>
+<input id="c0" type="password" placeholder="Senha atual (padrão)"><input id="c1" type="password" placeholder="Nova senha (mín. 8 caracteres)">
+<button id="cg">Salvar nova senha</button><p id="ce" class="err"></p></div>
+<div id="app" hidden><nav id="nav"></nav><div id="v"></div></div>
+</main><script>
+const $=s=>document.querySelector(s),EXAM=new Date('2026-12-06T08:00:00-03:00'),today=()=>new Date().toISOString().slice(0,10);
+const api=async(p,b)=>{const r=await fetch('/api/'+p,{method:b?'POST':'GET',headers:{'Content-Type':'application/json'},body:b?JSON.stringify(b):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'Erro');return j};
+let S={},D,tm,sim={};
+let t0;const save=()=>{clearTimeout(t0);t0=setTimeout(()=>api('progress',S).catch(()=>{}),800)};
+const set=(k,v)=>{S[k]=v;save()};
+async function boot(){['login','chg','app'].forEach(i=>$('#'+i).hidden=true);
+ try{const me=await api('me');S=me.progress||{};S.minutes=S.minutes||{};S.answers=S.answers||[];
+  if(me.mustChange)return $('#chg').hidden=false;D=await api('data');$('#app').hidden=false;nav();view(S.view||'home')}
+ catch{$('#login').hidden=false}}
+$('#go').onclick=async()=>{try{await api('login',{email:$('#em').value,password:$('#pw').value});$('#pw').value='';boot()}catch(e){$('#le').textContent=e.message}};
+$('#cg').onclick=async()=>{try{await api('password',{current:$('#c0').value,next:$('#c1').value});boot()}catch(e){$('#ce').textContent=e.message}};
+function nav(){$('#nav').innerHTML=[['home','Início'],['pomo','Pomodoro'],['stats','Estatísticas'],['sim','Simulados']].map(([k,n])=>`<button onclick="view('${k}')">${n}</button>`).join('')+'<button class="s" onclick="out()">Sair</button>'}
+async function out(){await api('logout',{});location.reload()}
+function view(k){S.view=k;save();({home,pomo,stats,sim:simView})[k]()}
+function home(){const d=Math.ceil((EXAM-new Date())/864e5),L=S.last;
+ const msg=d>60?'Mantenha o ritmo.':d>30?'Reta final se aproximando: intensifique os simulados.':d>7?'Menos de 30 dias! Foque em revisão e questões.':d>0?'Última semana: revise, descanse e confirme local de prova.':d==0?'É HOJE! Boa prova!':'Prova já realizada.';
+ $('#v').innerHTML=`<div class="card alert"><div class="big">${d>0?d:0} dias</div><div>para a prova (06/12/2026). ${msg}</div></div>
+ ${L?`<div class="card">Onde parei: <b>${L.name}</b> <button class="s" onclick="${L.url?`window.open('${L.url}')`:`view('${L.view}')`}">Continuar</button></div>`:''}
+ <div class="card"><h3>Resumos e Guias</h3><div class="grid">${D.docs.map((x,i)=>`<a class="d" href="${x.url}" target="_blank" rel="noopener" onclick="set('last',{name:'${x.name}',url:'${x.url}'})">📄 ${x.name}</a>`).join('')}</div></div>`;
+ if(window.Notification&&Notification.permission==='default')Notification.requestPermission();
+ if(S.alertDay!==today()&&window.Notification&&Notification.permission==='granted'){new Notification('Faltam '+d+' dias para a prova da PCBA!');set('alertDay',today())}}
+function pomo(){const discs=D.docs.map(x=>x.name);
+ $('#v').innerHTML=`<div class="card"><h3>Pomodoro</h3><select id="pd">${discs.map(x=>`<option>${x}</option>`).join('')}</select>
+ <div class="big" id="clk">25:00</div><button onclick="pstart(25)">Foco 25 min</button><button class="s" onclick="pstart(5)">Pausa 5 min</button> <button class="s" onclick="clearInterval(tm)">Parar</button></div>`}
+function pstart(m){clearInterval(tm);let s=m*60;const focus=m>5;const tick=()=>{$('#clk')&&($('#clk').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'));
+ if(s--<=0){clearInterval(tm);if(focus){const d=$('#pd').value,t=S.minutes[today()]=S.minutes[today()]||{};t[d]=(t[d]||0)+m;set('minutes',S.minutes)}new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=').play().catch(()=>{});alert(focus?'Foco concluído! Faça uma pausa.':'Pausa acabou!')}};tick();tm=setInterval(tick,1000)}
+function stats(){const days=[...Array(7)].map((_,i)=>{const d=new Date(Date.now()-i*864e5).toISOString().slice(0,10);return[d,Object.values(S.minutes[d]||{}).reduce((a,b)=>a+b,0)]}).reverse(),mx=Math.max(60,...days.map(x=>x[1]));
+ const by={};S.answers.forEach(a=>{const r=by[a.disc]=by[a.disc]||[0,0];r[1]++;if(a.ok)r[0]++});
+ $('#v').innerHTML=`<div class="card"><h3>Minutos de estudo (7 dias)</h3>${days.map(([d,m])=>`<div>${d.slice(5)} • ${m} min<div class="bar" style="width:${m/mx*100}%"></div></div>`).join('')}</div>
+ <div class="card"><h3>Acertos por disciplina</h3>${Object.entries(by).map(([k,[a,t]])=>`<div>${k}: ${a}/${t} (${Math.round(a/t*100)}%)<div class="bar" style="width:${a/t*100}%;background:${a/t<.6?'var(--err)':'var(--ok)'}"></div></div>`).join('')||'Resolva simulados para ver sua evolução.'}</div>`}
+function simView(){const ds=[...new Set(D.questions.map(q=>q.disc))];
+ $('#v').innerHTML=`<div class="card"><h3>Simulado</h3><select id="sd"><option value="">Todas as disciplinas</option>${ds.map(x=>`<option>${x}</option>`).join('')}</select>
+ <select id="st"><option value="">Todos os conteúdos</option></select><button onclick="sstart()">Iniciar</button></div><div id="q"></div>`;
+ $('#sd').onchange=()=>{$('#st').innerHTML='<option value="">Todos os conteúdos</option>'+[...new Set(D.questions.filter(q=>!$('#sd').value||q.disc==$('#sd').value).map(q=>q.topic))].map(x=>`<option>${x}</option>`).join('')}}
+function sstart(){sim.l=D.questions.filter(q=>(!$('#sd').value||q.disc==$('#sd').value)&&(!$('#st').value||q.topic==$('#st').value));sim.i=0;set('last',{name:'Simulado '+($('#sd').value||'geral'),view:'sim'});sq()}
+function sq(){const q=sim.l[sim.i];if(!q)return $('#q').innerHTML='<div class="card">Fim do simulado! Veja suas estatísticas.</div>';
+ $('#q').innerHTML=`<div class="card"><small>${q.disc} • ${q.topic} • ${q.fonte||''}</small><p>${sim.i+1}/${sim.l.length}. ${q.q}</p>${q.opts.map((o,i)=>`<button class="opt" onclick="sa(${i})">${'ABCDE'[i]}) ${o}</button>`).join('')}<div id="fb"></div></div>`}
+function sa(i){const q=sim.l[sim.i],ok=i==q.ans;S.answers.push({id:q.id,disc:q.disc,topic:q.topic,ok,date:today()});set('answers',S.answers);
+ $('#fb').innerHTML=`<p class="${ok?'':'err'}">${ok?'✅ Correto!':'❌ Errou. Correta: '+'ABCDE'[q.ans]}</p><p>${q.exp||''}</p><button onclick="sim.i++;sq()">Próxima</button>`}
+boot();
+</script></body></html>
